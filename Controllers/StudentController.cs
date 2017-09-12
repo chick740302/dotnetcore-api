@@ -11,11 +11,26 @@ namespace dotnet_api.Controllers
     [Route("api/[controller]")]
     public class StudentController : Controller
     {
+        private const string VERIFY_STRING = "123456";
+
+        private bool CheckAuth(string verify = VERIFY_STRING) 
+        {
+            var auth = Request.Headers["auth"];
+            if (auth.ToString() != verify) {
+                return false;
+            }
+            return true;
+        }
+
         // GET api/student
         [HttpGet]
         public IEnumerable<Student> Get()
         {
             List<Student> result = null;
+            if (!CheckAuth()) 
+            {
+                return result;
+            }
             using (var db = new DatabaseContext()) 
             {
                 result = db.Students.ToList();
@@ -28,6 +43,10 @@ namespace dotnet_api.Controllers
         public Student Get(int id)
         {
             Student result = null;
+            if (!CheckAuth()) 
+            {
+                return result;
+            }
             using (var db = new DatabaseContext()) 
             {
                 result = db.Students.Where(a => a.Id == id).FirstOrDefault();
@@ -40,6 +59,12 @@ namespace dotnet_api.Controllers
         public ServiceResult Post([FromBody]Student value)
         {
             ServiceResult result = new ServiceResult();
+            if (!CheckAuth()) 
+            {
+                result.IsSuccess = false;
+                result.Message = "wrong auth value";
+                return result;
+            }
             if (value == null) 
             {
                 result.IsSuccess = false;
@@ -70,6 +95,12 @@ namespace dotnet_api.Controllers
         public ServiceResult Put(int id, [FromBody]Student value)
         {
             ServiceResult result = new ServiceResult();
+            if (!CheckAuth()) 
+            {
+                result.IsSuccess = false;
+                result.Message = "wrong auth value";
+                return result;
+            }
             if (value == null) 
             {
                 result.IsSuccess = false;
@@ -111,6 +142,12 @@ namespace dotnet_api.Controllers
         public ServiceResult Delete(int id)
         {
             ServiceResult result = new ServiceResult();
+            if (!CheckAuth()) 
+            {
+                result.IsSuccess = false;
+                result.Message = "wrong auth value";
+                return result;
+            }
             using (var db = new DatabaseContext()) 
             {
                 var d = (from a in db.Students where a.Id == id select a).FirstOrDefault();
